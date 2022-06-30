@@ -1,6 +1,6 @@
 Package: qbr
 Title: Access the 'Quickbase' JSON API
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(
     person("John", "Erdmann", , "john.erdmann@keene.edu", role = c("aut", "cre")),
     person("Keene State College", role = c("cph", "fnd")))
@@ -18,9 +18,9 @@ Imports: dplyr (>= 1.0.9), httr (>= 1.4.3), jsonlite (>= 1.8.0),
 Suggests: testthat (>= 3.0.0), keyring
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2022-05-17 17:44:07 UTC; jae1028
+Packaged: 2022-06-30 17:51:46 UTC; jae1028
 Author: John Erdmann [aut, cre],
   Keene State College [cph, fnd]
 Maintainer: John Erdmann <john.erdmann@keene.edu>
 Repository: CRAN
-Date/Publication: 2022-05-18 16:40:05 UTC
+Date/Publication: 2022-06-30 18:10:02 UTC
