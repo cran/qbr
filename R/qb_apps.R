@@ -1,6 +1,6 @@
 #' Copy an app
 #'
-#' \code{copy_app} Copy an app. Provides options to copy data and users.
+#' Copy an app. Provides options to copy data and users.
 #'
 #' @template subdomain
 #' @template auth
@@ -77,7 +77,7 @@ copy_app <- function(subdomain, auth, app_id, app_name, app_desc = NULL,
 
 #' Delete an app
 #'
-#' \code{delete_app} Delete an entire app, including all of the tables and data.
+#' Delete an entire app, including all of the tables and data.
 #'
 #' @template subdomain
 #' @template auth
@@ -126,7 +126,7 @@ delete_app <- function(subdomain, auth, app_id, app_name, agent = NULL){
 
 #' Get app events
 #'
-#' \code{get_app_events} Get a tibble of events that can be triggered based on
+#' Get a tibble of events that can be triggered based on
 #' data or user actions in this application, includes: Email notification,
 #' Reminders, Subscriptions, QB Actions, Webhooks, record change triggered
 #' Automations (does not include scheduled).
@@ -170,4 +170,70 @@ get_app_events <- function(subdomain, auth, app_id, agent = NULL){
       return(req))
 
   return(tibble::as_tibble(events))
+}
+
+#' Get an app
+#'
+#' Get metadata for an app.
+#'
+#' @template subdomain
+#' @template auth
+#' @template app_id
+#' @template agent
+#' @param include_sec Logical. Includes security properties if true.
+#' @param include_vars Logical. Includes app variables if true.
+#'
+#' @return A tibble.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'    get_app(subdomain = "abc",
+#'               auth = keyring::key_get("qb_example"),
+#'               app_id = "bsf5hphe5")
+#' }
+get_app <- function(subdomain, auth, app_id, agent = NULL, include_sec = T, include_vars = T){
+
+  if(!stringr::str_detect(auth, "^QB-USER-TOKEN ") &
+     !stringr::str_detect(auth, "^QB-TEMP-TOKEN ")){
+    auth <- stringr::str_c("QB-USER-TOKEN ", auth)
+  }
+
+  if(!stringr::str_detect(subdomain, "\\.+")){
+    subdomain <- stringr::str_c(subdomain, ".quickbase.com")
+  }
+
+  qb_url <- paste0("https://api.quickbase.com/v1/apps/", app_id)
+
+  req <- httr::GET(url = qb_url,
+                   encode = "json",
+                   httr::accept_json(),
+                   httr::add_headers("QB-Realm-Hostname" = subdomain,
+                                     "User-Agent" = agent,
+                                     "Authorization" = auth))
+
+  tryCatch(
+    resp <- jsonlite::fromJSON(httr::content(req, as = "text"), flatten = F),
+    error = function(e)
+      return(req))
+
+  app_data <- resp[names(resp) %in% c("securityProperties", "variables") == F] %>%
+    tibble::as_tibble()
+
+
+  if(include_sec){
+    sec <- tibble::as_tibble(resp[["securityProperties"]])
+    sec <- sec %>%
+      dplyr::rename_with(~ paste0("sec_", names(sec)))
+    app_data <- app_data %>% dplyr::bind_cols(sec)
+  }
+
+  if(include_vars){
+    var <- tibble::as_tibble(resp[["variables"]]) %>%
+      dplyr::mutate(name = paste0("var_", name)) %>%
+      tidyr::pivot_wider(names_from = name, values_from = value)
+    app_data <- app_data %>% dplyr::bind_cols(var)
+  }
+
+  return(app_data)
 }
