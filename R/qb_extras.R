@@ -18,17 +18,12 @@
 #' }
 summarize_app <- function(subdomain, auth, app_id, agent = NULL){
 
-  if(!stringr::str_detect(auth, "^QB-USER-TOKEN ") &
-     !stringr::str_detect(auth, "^QB-TEMP-TOKEN ")){
-    auth <- stringr::str_c("QB-USER-TOKEN ", auth)
-  }
+  stopifnot(val_subdomain(subdomain), is.character(app_id), length(app_id) == 1)
 
-  if(!stringr::str_detect(subdomain, "\\.+")){
-    subdomain <- stringr::str_c(subdomain, ".quickbase.com")
-  }
+  auth <- val_token(auth)
 
   app <- qbr::get_app(subdomain, auth, app_id, agent, T, T)
-  users <- qbr::get_users(subdomain, auth, agent, app_ids = app_id)
+  users <- qbr::get_users(subdomain, auth, agent, app_ids = list(app_id))
   tables <- qbr::get_tables(subdomain, auth, app_id, agent) %>%
     dplyr::mutate(spaceUsedInt = as.numeric(gsub("[[:alpha:]]|\\s", "", spaceUsed)),
                   spaceUsedMB = ifelse(grepl(" KB", spaceUsed), spaceUsedInt / 1000,
